@@ -1,7 +1,7 @@
 const mongoose = require('mongoose')
 
-if (process.argv.length != 3 && process.argv.length != 5) {
-  console.log(`Use command 'node mongo.js <yourpassword>' to see database entries or 'node mongo.js <yourpassword> <name> <number>' to add a new entry to database`)
+if (process.argv.length !== 3 && process.argv.length !== 5) {
+  console.log('Use command "node mongo.js <yourpassword>" to see database entries or "node mongo.js <yourpassword> <name> <number>" to add a new entry to database')
   process.exit(1)
 }
 
@@ -14,9 +14,23 @@ mongoose.set('strictQuery',false)
 mongoose.connect(url)
 
 const personSchema = new mongoose.Schema({
-  name: String,
-  number: String,
+  name: {
+    type: String,
+    required: [true, 'Name is required'],
+  },
+  number: {
+    type: String,
+    minLength: 9,
+    validate: {
+      validator: (v) => {
+        return /\d{2,3}-\d+/.test(v) && v.replace('-', '').length > 8
+      },
+      message: props => `${props.value} is not a valid phone number!`
+    },
+    required: [true, 'Phone number is required']
+  },
 })
+
 
 const Person = mongoose.model('Person', personSchema)
 
@@ -27,7 +41,7 @@ if (process.argv.length === 5) {
     number: process.argv[4],
   })
 
-  person.save().then(result => {
+  person.save().then(() => {
     console.log('person saved!')
     mongoose.connection.close()
   })
